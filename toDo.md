@@ -1,8 +1,14 @@
-### <b> 1. EDA </b>
-* Perform one-hot enconding in order to create a correlation matrix
-* Plot graphs for variables of interest
+### <b> 1. Irrigation </b>
 
-### <b> 2. ML model benchmarking </b>
+* Think how to add Irrigation when values are NaN
 
-* Test as a Classification task to get a baseline for prediction accuracy and errors
-* Test a TimeSeries approach (eventhough it might need to be treared as an irregular timeseries due to lack of data)
+
+### <b> 2. PCA</b>
+* Normalize variables
+* Perform PCA
+
+### <b> 3. Read about Decision Tree optimization </b>
+
+* How to improve errors MAE, MSE
+* Check over/underfitting
+* Hyperparameter tunning?

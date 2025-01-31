@@ -1,5 +1,11 @@
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
 from itertools import combinations
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+#from mpl_toolkits.mplot3d import Axes3D 
 
 # [DATASET CREATION FUNCTIONS]
 
@@ -233,3 +239,119 @@ def merge_variables(bbch_df, biometry_df, gdd_df, par_df, nitrates_df):
     )
     
     return final_df
+
+# [EXPLORATORY DATA ANALISYS VISUALIZATIONS]
+
+def explained_variance_visualizer(df):
+    # Extract numeric columns only
+    df_numeric = df.select_dtypes(include=[np.number])
+
+    # Standardize the data
+    scaler = StandardScaler()
+    df_scaled = scaler.fit_transform(df_numeric)
+
+    # Apply PCA (keep all components for full variance analysis)
+    pca = PCA()
+    pca.fit(df_scaled)
+
+    # Explained variance ratio
+    explained_variance = pca.explained_variance_ratio_
+
+    # Cumulative variance (optional)
+    cumulative_variance = np.cumsum(explained_variance)
+
+    # Create Scree Plot
+    plt.figure(figsize=(10, 6))
+    plt.bar(range(1, len(explained_variance) + 1), explained_variance, alpha=0.7, color="b", label="Individual Explained Variance")
+    plt.plot(range(1, len(cumulative_variance) + 1), cumulative_variance, marker="o", linestyle="--", color="r", label="Cumulative Explained Variance")
+
+    # Labels and formatting
+    plt.xlabel("Principal Component")
+    plt.ylabel("Explained Variance Ratio")
+    plt.title("Scree Plot: Explained Variance by Principal Components")
+    plt.xticks(range(1, len(explained_variance) + 1))
+    plt.legend()
+    plt.grid(alpha=0.3)
+
+    # Show plot
+    plt.show()
+
+    return explained_variance
+
+def pca(df, n_components):
+    try:
+        if (n_components not in [2, 3]):
+            raise ValueError("n_components must be either 2 or 3.")
+        
+        # Extract numeric columns for PCA (excluding non-numeric ones)
+        df_numeric = df.select_dtypes(include=[np.number])
+
+        # Standardize the data
+        scaler = StandardScaler()
+        df_scaled = scaler.fit_transform(df_numeric)
+
+        if (n_components == 2):
+
+            # Apply PCA (2 components for visualization)
+            pca = PCA(n_components=2)
+            pca_2d = pca.fit_transform(df_scaled)
+            loadings_2d = pca.components_
+
+            # Create a new DataFrame with PCA results and Sample labels
+            df_pca = pd.DataFrame(pca_2d, columns=["PC1", "PC2"])
+            df_pca["Family Sample"] = df["Family Sample"]  # Retain sample information
+
+            # Plot PCA results with Sample labels
+            plt.figure(figsize=(10, 6))
+            sns.scatterplot(data=df_pca, x="PC1", y="PC2", hue="Family Sample", palette="tab10", s=100, alpha=0.8)
+            plt.title("PCA Scatter Plot (Colored by Sample)")
+            plt.xlabel("Principal Component 1")
+            plt.ylabel("Principal Component 2")
+            plt.legend(title="Family Sample", bbox_to_anchor=(1.05, 1), loc='upper left')  # Adjust legend position
+            plt.show()
+
+            return pca_2d, loadings_2d
+        
+        elif (n_components == 3):
+            
+            # Apply PCA with 3 components
+            pca = PCA(n_components=3)
+            pca_3d = pca.fit_transform(df_scaled)
+            loadings_3d = pca.components_
+
+            # Create DataFrame for PCA results
+            df_pca = pd.DataFrame(pca_3d, columns=["PC1", "PC2", "PC3"])
+
+            # Add Family Sample column
+            df_pca["Family Sample"] = df["Sample"].str[:-2]
+
+            # Create 3D Scatter Plot
+            fig = plt.figure(figsize=(10, 7))
+            ax = fig.add_subplot(111, projection="3d")
+
+            # Create color mapping based on Family Sample
+            unique_samples = df_pca["Family Sample"].unique()
+            colors = sns.color_palette("tab10", len(unique_samples))
+            color_dict = dict(zip(unique_samples, colors))
+
+            # Scatter plot
+            for sample in unique_samples:
+                subset = df_pca[df_pca["Family Sample"] == sample]
+                ax.scatter(subset["PC1"], subset["PC2"], subset["PC3"], 
+                        label=sample, color=color_dict[sample], s=50, alpha=0.8)
+
+            # Labels and title
+            ax.set_xlabel("Principal Component 1")
+            ax.set_ylabel("Principal Component 2")
+            ax.set_zlabel("Principal Component 3")
+            ax.set_title("3D PCA Scatter Plot (Colored by Family Sample)")
+            ax.legend(title="Family Sample", bbox_to_anchor=(1.1, 1))
+
+            # Show plot
+            plt.show()
+
+            return pca_3d, loadings_3d
+    
+    except ValueError as e:
+        print(f"Error: {e}")
+    

@@ -5,7 +5,13 @@ import numpy as np
 from itertools import combinations
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-#from mpl_toolkits.mplot3d import Axes3D 
+#from mpl_toolkits.mplot3d import Axes3D
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.ensemble import RandomForestRegressor
+from xgboost import XGBRegressor
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
 
 # [DATASET CREATION FUNCTIONS]
 
@@ -120,6 +126,7 @@ def calculate_cumulative_gdd(temperature_df):
 
     # Drop unnecessary columns
     cumulative_gdd.drop(columns='temperature', inplace=True)
+    
     return cumulative_gdd
 
 
@@ -354,4 +361,63 @@ def pca(df, n_components):
     
     except ValueError as e:
         print(f"Error: {e}")
+
+# [MODELS]
     
+def custom_train_test_split(df, label):
+    X = df.drop(columns=label)
+    y = df[label]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+    return X_train_scaled, X_test_scaled, y_train, y_test
+
+
+
+def predict_biometry(df, biometry_columns, model_type='linear'):
+    """
+    Trains and evaluates different regression models on specified biometry columns.
+
+    Parameters:
+    - df (DataFrame): The input dataset.
+    - biometry_columns (list): List of target columns to predict.
+    - model_type (str): The type of regression model ('linear', 'ridge', 'lasso', 'random_forest', 'xgboost').
+
+    Returns:
+    - DataFrame: Results including MSE, MAE, and R² for each target variable.
+    """
+    
+    model_mapping = {
+        'linear': LinearRegression(),
+        'ridge': Ridge(alpha=1.0),
+        'lasso': Lasso(alpha=0.01),
+        'random_forest': RandomForestRegressor(random_state=42),
+        'xgboost': XGBRegressor(objective='reg:squarederror', random_state=42)
+    }
+    
+    if model_type not in model_mapping:
+        raise ValueError(f"Invalid model type. Choose from {list(model_mapping.keys())}")
+    
+    model = model_mapping[model_type]
+    
+    results = []
+    
+    for target in biometry_columns:
+        
+        X_train, X_test, y_train, y_test = custom_train_test_split(df, label=target)
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+
+        mse = mean_squared_error(y_test, y_pred)
+        mae = mean_absolute_error(y_test, y_pred)
+        r2 = r2_score(y_test, y_pred)
+        
+        results.append({
+            'Target Variable': target,
+            'MSE': mse,
+            'MAE': mae,
+            'R^2': r2
+        })
+    
+    return model_type, results

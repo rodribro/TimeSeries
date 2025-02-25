@@ -285,7 +285,7 @@ def explained_variance_visualizer(df):
 
     return explained_variance
 
-def pca(df, n_components):
+def my_pca(df, n_components):
     try:
         if (n_components not in [2, 3]):
             raise ValueError("n_components must be either 2 or 3.")

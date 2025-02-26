@@ -306,7 +306,8 @@ def my_pca(df, n_components):
 
             # Create a new DataFrame with PCA results and Sample labels
             df_pca = pd.DataFrame(pca_2d, columns=["PC1", "PC2"])
-            df_pca["Family Sample"] = df["Family Sample"]  # Retain sample information
+
+            df_pca["Family Sample"] = df["Sample"].str[:-2]  # Retain sample information
 
             # Plot PCA results with Sample labels
             plt.figure(figsize=(10, 6))

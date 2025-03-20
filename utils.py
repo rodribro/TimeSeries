@@ -43,6 +43,18 @@ def transform_bbch_data(df):
     
     return melted_df
 
+def plot_plant_biometry(df, plant):    
+    plant = df[df['Sample'] == plant]
+    plt.figure(figsize=(8, 4))
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.xlabel("Date")
+    plt.xticks(rotation=45) 
+    plt.plot(plant['Date'], plant['Diameter'], label="Diameter")
+    plt.plot(plant['Date'], plant['Perpendicular'], label="Perpendicular")
+    plt.plot(plant['Date'], plant['Height'], label="Height")
+    plt.plot(plant['Date'], plant['Average Leaf Thickness'], label="Average Leaf Thickness")
+    plt.legend()
+
 def count_daily_measurements(df): 
     '''
     Count daily number of measurements
@@ -181,7 +193,7 @@ def calculate_cumulative_par(par_df):
     cumulative_par = cumulative_par.merge(result_df, on='Date', how='left')
     
     return cumulative_par.sort_values('Date')
-    return cumulative_par
+    
 
 
 def daily_average_humidity(humidity_df):
